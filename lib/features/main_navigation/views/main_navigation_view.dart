@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:github_repo_app/features/favorite/view/favorite_view.dart';
+import 'package:github_repo_app/features/search/view/search_view.dart';
 
 class MainNavigationView extends StatefulWidget {
   const MainNavigationView({super.key});
@@ -11,12 +13,8 @@ class _MainNavigationViewState extends State<MainNavigationView> {
   int _currentIndex = 0;
 
   final List<Widget> _screens = [
-    const Scaffold(
-      body: Center(child: Text('Search')),
-    ),
-    const Scaffold(
-      body: Center(child: Text('Favorites')),
-    ),
+    const SearchView(),
+    const FavoriteView(),
   ];
 
   @override
