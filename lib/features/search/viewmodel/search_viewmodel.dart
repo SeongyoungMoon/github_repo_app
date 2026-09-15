@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:github_repo_app/core/event/ui_event.dart';
 import 'package:github_repo_app/core/network/api_exception.dart';
+import 'package:github_repo_app/core/utils/throttler.dart';
 import 'package:github_repo_app/features/search/models/github_repo.dart';
 import 'package:github_repo_app/features/search/repositories/search_repository.dart';
 import 'package:github_repo_app/features/search/repositories/search_api_error_handler.dart';
@@ -53,7 +54,7 @@ class SearchState {
 
 class SearchNotifier extends Notifier<SearchState> {
   late final SearchRepository _repository;
-
+  final _scrollThrottler = Throttler(duration: const Duration(milliseconds: 300));
   final _eventController = StreamController<UiEvent>.broadcast();
 
   Stream<UiEvent> get eventStream => _eventController.stream;
@@ -108,31 +109,33 @@ class SearchNotifier extends Notifier<SearchState> {
   }
 
   Future<void> fetchNextPage() async {
-    if (state.isFetchingNextPage || !state.hasMore || state.isLoading) return;
+    _scrollThrottler.run(() async {
+      if (state.isFetchingNextPage || !state.hasMore || state.isLoading) return;
 
-    state = state.copyWith(isFetchingNextPage: true);
+      state = state.copyWith(isFetchingNextPage: true);
 
-    try {
-      final nextPage = state.currentPage + 1;
-      final newResults = await _repository.searchRepositories(
-        query: state.currentQuery,
-        page: nextPage,
-      );
+      try {
+        final nextPage = state.currentPage + 1;
+        final newResults = await _repository.searchRepositories(
+          query: state.currentQuery,
+          page: nextPage,
+        );
 
-      state = state.copyWith(
-        repos: [...state.repos, ...newResults],
-        isFetchingNextPage: false,
-        hasMore: newResults.isNotEmpty,
-        currentPage: nextPage,
-      );
-    } on ApiException catch (e) {
-      final errorMessage = handleSearchApiError(e);
-      state = state.copyWith(isFetchingNextPage: false);
-      _eventController.sink.add(ShowSnackBarEvent(errorMessage));
-    } catch (e) {
-      state = state.copyWith(isFetchingNextPage: false);
-      _eventController.sink.add(ShowSnackBarEvent('Failed to load next page.'));
-    }
+        state = state.copyWith(
+          repos: [...state.repos, ...newResults],
+          isFetchingNextPage: false,
+          hasMore: newResults.isNotEmpty,
+          currentPage: nextPage,
+        );
+      } on ApiException catch (e) {
+        final errorMessage = handleSearchApiError(e);
+        state = state.copyWith(isFetchingNextPage: false,);
+        _eventController.sink.add(ShowSnackBarEvent(errorMessage));
+      } catch (e) {
+        state = state.copyWith(isFetchingNextPage: false);
+        _eventController.sink.add(ShowSnackBarEvent('Failed to load next page.'));
+      }
+    });
   }
 }
 

@@ -32,6 +32,7 @@ class _SearchViewState extends ConsumerState<SearchView> {
 
         switch (event) {
           case ShowSnackBarEvent(:final message):
+            ScaffoldMessenger.of(context).clearSnackBars();
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
                 content: Text(message),

@@ -51,6 +51,7 @@ class _SearchDetailViewState extends ConsumerState<SearchDetailView> {
         _isLoading = false;
       });
 
+      ScaffoldMessenger.of(context).clearSnackBars();
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(errorMessage),
