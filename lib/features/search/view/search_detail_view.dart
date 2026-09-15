@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:github_repo_app/features/favorite/viewmodel/favorite_viewmodel.dart';
 import 'package:github_repo_app/features/search/models/github_repo.dart';
 import 'package:github_repo_app/features/search/viewmodel/search_viewmodel.dart';
 
@@ -19,7 +20,6 @@ class _SearchDetailViewState extends ConsumerState<SearchDetailView> {
   GithubRepo? _detailRepo;
   bool _isLoading = true;
   String? _errorMessage;
-  bool isFav = false;
 
   @override
   void initState() {
@@ -54,6 +54,8 @@ class _SearchDetailViewState extends ConsumerState<SearchDetailView> {
   @override
   Widget build(BuildContext context) {
     final repo = _detailRepo ?? widget.repo;
+    final favorites = ref.watch(favoritesProvider);
+    final isFav = favorites.any((item) => item.id == repo.id);
 
     return Scaffold(
       appBar: AppBar(
@@ -66,10 +68,7 @@ class _SearchDetailViewState extends ConsumerState<SearchDetailView> {
             ),
             highlightColor: Colors.transparent,
             onPressed: () {
-              // TODO: connect to local storage
-              setState(() {
-                isFav = !isFav;
-              });
+              ref.read(favoritesProvider.notifier).toggleFavorite(repo);
             },
           ),
         ],

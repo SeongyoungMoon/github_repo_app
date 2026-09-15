@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:github_repo_app/features/search/models/github_repo.dart';
+import 'package:github_repo_app/features/favorite/viewmodel/favorite_viewmodel.dart';
 
-class SearchItemTile extends StatefulWidget {
+class SearchItemTile extends ConsumerWidget {
   final GithubRepo repo;
   final VoidCallback? onTap;
 
@@ -12,22 +14,18 @@ class SearchItemTile extends StatefulWidget {
   });
 
   @override
-  State<SearchItemTile> createState() => _SearchItemTileState();
-}
+  Widget build(BuildContext context, WidgetRef ref) {
+    final favorites = ref.watch(favoritesProvider);
+    final isFav = favorites.any((item) => item.id == repo.id);
 
-class _SearchItemTileState extends State<SearchItemTile> {
-  bool isFav = false;
-
-  @override
-  Widget build(BuildContext context) {
     return ListTile(
-      onTap: widget.onTap,
+      onTap: onTap,
       leading: CircleAvatar(
         backgroundColor: Colors.grey[200],
-        backgroundImage: NetworkImage(widget.repo.owner.avatarUrl),
+        backgroundImage: NetworkImage(repo.owner.avatarUrl),
       ),
       title: Text(
-        widget.repo.fullName,
+        repo.fullName,
         style: const TextStyle(fontWeight: FontWeight.w600),
       ),
       trailing: IconButton(
@@ -37,10 +35,7 @@ class _SearchItemTileState extends State<SearchItemTile> {
         ),
         highlightColor: Colors.transparent,
         onPressed: () {
-          /// TODO: connect to local storage
-          setState(() {
-            isFav = !isFav;
-          });
+          ref.read(favoritesProvider.notifier).toggleFavorite(repo);
         },
       ),
     );
