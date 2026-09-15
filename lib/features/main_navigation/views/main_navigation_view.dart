@@ -17,6 +17,7 @@ class _MainNavigationViewState extends State<MainNavigationView> {
     const FavoriteView(),
   ];
 
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
