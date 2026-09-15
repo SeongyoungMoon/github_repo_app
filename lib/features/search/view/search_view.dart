@@ -1,8 +1,10 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:github_repo_app/core/event/ui_event.dart';
 import 'package:github_repo_app/features/search/view/search_detail_view.dart';
-import 'package:github_repo_app/features/search/view/widgets/search_item_tile.dart'
-    show SearchItemTile;
+import 'package:github_repo_app/features/search/view/widgets/search_item_tile.dart';
 import 'package:github_repo_app/features/search/viewmodel/search_viewmodel.dart';
 
 class SearchView extends ConsumerStatefulWidget {
@@ -15,24 +17,49 @@ class SearchView extends ConsumerStatefulWidget {
 class _SearchViewState extends ConsumerState<SearchView> {
   final TextEditingController _searchController = TextEditingController();
   final ScrollController _scrollController = ScrollController();
+  StreamSubscription<UiEvent>? _eventSubscription;
 
   @override
   void initState() {
     super.initState();
     _scrollController.addListener(_onScroll);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _eventSubscription = ref
+          .read(searchProvider.notifier)
+          .eventStream
+          .listen((event) {
+        if (!mounted) return;
+
+        switch (event) {
+          case ShowSnackBarEvent(:final message):
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(message),
+                behavior: SnackBarBehavior.fixed,
+                backgroundColor: Colors.redAccent,
+                duration: const Duration(seconds: 3),
+              ),
+            );
+        }
+      });
+    });
   }
 
   @override
   void dispose() {
     _searchController.dispose();
     _scrollController.dispose();
+    _eventSubscription?.cancel();
     super.dispose();
   }
 
   void _onScroll() {
     if (_scrollController.position.pixels >=
         _scrollController.position.maxScrollExtent - 300) {
-      ref.read(searchProvider.notifier).fetchNextPage();
+      final searchState = ref.read(searchProvider);
+      if (!searchState.isFetchingNextPage && !searchState.isLoading) {
+        ref.read(searchProvider.notifier).fetchNextPage();
+      }
     }
   }
 
@@ -66,6 +93,11 @@ class _SearchViewState extends ConsumerState<SearchView> {
                 ),
               ),
               onSubmitted: (_) => _onSearch(),
+              onChanged: (text) {
+                if (text.trim().isEmpty) {
+                  setState(() {});
+                }
+              },
             ),
           ),
           Expanded(
@@ -77,6 +109,22 @@ class _SearchViewState extends ConsumerState<SearchView> {
   }
 
   Widget _buildBody(SearchState state) {
+    if (_searchController.text.trim().isEmpty) {
+      return const Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.search, size: 64, color: Colors.grey),
+            SizedBox(height: 16),
+            Text(
+              'Search GitHub Repositories',
+              style: TextStyle(fontSize: 18, color: Colors.grey),
+            ),
+          ],
+        ),
+      );
+    }
+
     if (state.isLoading) {
       return const Center(child: CircularProgressIndicator());
     }

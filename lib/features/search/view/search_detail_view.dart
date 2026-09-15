@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:github_repo_app/core/network/api_exception.dart';
 import 'package:github_repo_app/features/favorite/viewmodel/favorite_viewmodel.dart';
 import 'package:github_repo_app/features/search/models/github_repo.dart';
+import 'package:github_repo_app/features/search/repositories/search_api_error_handler.dart';
 import 'package:github_repo_app/features/search/viewmodel/search_viewmodel.dart';
 
 class SearchDetailView extends ConsumerStatefulWidget {
@@ -19,7 +21,6 @@ class SearchDetailView extends ConsumerStatefulWidget {
 class _SearchDetailViewState extends ConsumerState<SearchDetailView> {
   GithubRepo? _detailRepo;
   bool _isLoading = true;
-  String? _errorMessage;
 
   @override
   void initState() {
@@ -41,13 +42,38 @@ class _SearchDetailViewState extends ConsumerState<SearchDetailView> {
           _isLoading = false;
         });
       }
+    } on ApiException catch (e) {
+      if (!mounted) return;
+
+      final errorMessage = handleSearchApiError(e);
+
+      setState(() {
+        _isLoading = false;
+      });
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(errorMessage),
+          behavior: SnackBarBehavior.floating,
+          backgroundColor: Colors.redAccent,
+          duration: const Duration(seconds: 3),
+        ),
+      );
     } catch (e) {
-      if (mounted) {
-        setState(() {
-          _errorMessage = 'Failed to load details.';
-          _isLoading = false;
-        });
-      }
+      if (!mounted) return;
+
+      setState(() {
+        _isLoading = false;
+      });
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Failed to load details.'),
+          behavior: SnackBarBehavior.floating,
+          backgroundColor: Colors.redAccent,
+          duration: Duration(seconds: 3),
+        ),
+      );
     }
   }
 
@@ -75,8 +101,6 @@ class _SearchDetailViewState extends ConsumerState<SearchDetailView> {
       ),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
-          : _errorMessage != null
-          ? Center(child: Text(_errorMessage!))
           : Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(

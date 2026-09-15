@@ -5,10 +5,10 @@ import 'package:github_repo_app/features/search/models/github_repo.dart';
 import 'package:http/http.dart' as http;
 
 
-class GithubRepository {
+class SearchRepository {
   final http.Client _client;
 
-  GithubRepository({http.Client? client}) : _client = client ?? http.Client();
+  SearchRepository({http.Client? client}) : _client = client ?? http.Client();
 
   Future<List<GithubRepo>> searchRepositories({
     required String query,

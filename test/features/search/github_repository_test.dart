@@ -1,12 +1,12 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:github_repo_app/features/search/repositories/github_repository.dart';
+import 'package:github_repo_app/features/search/repositories/search_repository.dart';
 
 void main() {
   group('GithubRepository Real API Integration Test', () {
-    late GithubRepository githubRepository;
+    late SearchRepository githubRepository;
 
     setUp(() {
-      githubRepository = GithubRepository();
+      githubRepository = SearchRepository();
     });
 
     test('Search API should correctly parse response into Model classes', () async {

@@ -1,9 +1,14 @@
-import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:github_repo_app/features/search/models/github_repo.dart';
-import 'package:github_repo_app/features/search/repositories/github_repository.dart';
+import 'dart:async';
 
-final githubRepositoryProvider = Provider<GithubRepository>((ref) {
-  return GithubRepository();
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:github_repo_app/core/event/ui_event.dart';
+import 'package:github_repo_app/core/network/api_exception.dart';
+import 'package:github_repo_app/features/search/models/github_repo.dart';
+import 'package:github_repo_app/features/search/repositories/search_repository.dart';
+import 'package:github_repo_app/features/search/repositories/search_api_error_handler.dart';
+
+final githubRepositoryProvider = Provider<SearchRepository>((ref) {
+  return SearchRepository();
 });
 
 class SearchState {
@@ -47,15 +52,23 @@ class SearchState {
 }
 
 class SearchNotifier extends Notifier<SearchState> {
-  late final GithubRepository _repository;
+  late final SearchRepository _repository;
+
+  final _eventController = StreamController<UiEvent>.broadcast();
+
+  Stream<UiEvent> get eventStream => _eventController.stream;
 
   @override
   SearchState build() {
     _repository = ref.watch(githubRepositoryProvider);
+
+    ref.onDispose(() {
+      _eventController.close();
+    });
+
     return const SearchState();
   }
 
-  /// 첫 페이지 검색
   Future<void> search(String query) async {
     if (query.trim().isEmpty) {
       state = const SearchState();
@@ -75,11 +88,22 @@ class SearchNotifier extends Notifier<SearchState> {
         hasMore: results.isNotEmpty,
         currentPage: 1,
       );
+    } on ApiException catch (e) {
+      final errorMessage = handleSearchApiError(e);
+
+      state = state.copyWith(
+        isLoading: false,
+        isFetchingNextPage: false,
+      );
+
+      _eventController.sink.add(ShowSnackBarEvent(errorMessage));
     } catch (e) {
       state = state.copyWith(
         isLoading: false,
-        errorMessage: 'An error occurred while searching repositories.',
+        isFetchingNextPage: false,
       );
+
+      _eventController.sink.add(ShowSnackBarEvent('Unexpected error occurred.'));
     }
   }
 
@@ -101,8 +125,13 @@ class SearchNotifier extends Notifier<SearchState> {
         hasMore: newResults.isNotEmpty,
         currentPage: nextPage,
       );
+    } on ApiException catch (e) {
+      final errorMessage = handleSearchApiError(e);
+      state = state.copyWith(isFetchingNextPage: false);
+      _eventController.sink.add(ShowSnackBarEvent(errorMessage));
     } catch (e) {
       state = state.copyWith(isFetchingNextPage: false);
+      _eventController.sink.add(ShowSnackBarEvent('Failed to load next page.'));
     }
   }
 }

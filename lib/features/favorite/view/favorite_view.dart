@@ -25,17 +25,7 @@ class FavoriteView extends ConsumerWidget {
         itemCount: favorites.length,
         itemBuilder: (context, index) {
           final repo = favorites[index];
-          return SearchItemTile(
-            repo: repo,
-            onTap: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => SearchItemTile(repo: repo),
-                ),
-              );
-            },
-          );
+          return SearchItemTile(repo: repo);
         },
       ),
     );
