@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:github_repo_app/features/main_navigation/views/main_navigation_view.dart';
 import 'core/theme/app_theme.dart';
 
 void main() {
@@ -19,11 +20,7 @@ class MyApp extends StatelessWidget {
       title: 'GitHub Repo App',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.lightTheme,
-      home: const Scaffold(
-        body: Center(
-          child: Text('GitHub Repository App Initialized'),
-        ),
-      ),
+      home: const MainNavigationView(),
     );
   }
 }
