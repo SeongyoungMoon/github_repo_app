@@ -22,7 +22,17 @@ class SearchItemTile extends ConsumerWidget {
       onTap: onTap,
       leading: CircleAvatar(
         backgroundColor: Colors.grey[200],
-        backgroundImage: NetworkImage(repo.owner.avatarUrl),
+        child: ClipOval(
+          child: Image.network(
+            repo.owner.avatarUrl,
+            width: 40,
+            height: 40,
+            fit: BoxFit.cover,
+            errorBuilder: (context, error, stackTrace) {
+              return const Icon(Icons.person, color: Colors.grey);
+            },
+          ),
+        ),
       ),
       title: Text(
         repo.fullName,

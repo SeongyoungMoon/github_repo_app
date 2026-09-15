@@ -86,8 +86,18 @@ class _SearchDetailViewState extends ConsumerState<SearchDetailView> {
               children: [
                 CircleAvatar(
                   radius: 30,
-                  backgroundImage: NetworkImage(repo.owner.avatarUrl),
                   backgroundColor: Colors.transparent,
+                  child: ClipOval(
+                    child: Image.network(
+                      repo.owner.avatarUrl,
+                      width: 40,
+                      height: 40,
+                      fit: BoxFit.cover,
+                      errorBuilder: (context, error, stackTrace) {
+                        return const Icon(Icons.person, color: Colors.grey);
+                      },
+                    ),
+                  ),
                 ),
                 const SizedBox(width: 16),
                 Expanded(
